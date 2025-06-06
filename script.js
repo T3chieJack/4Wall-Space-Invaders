@@ -176,6 +176,65 @@ function movePlayer(e) {
 }
 document.addEventListener('keydown', movePlayer);
 
+// --- Touchscreen Controls ---
+let touchStartX = null;
+
+function handleTouchStart(e) {
+  if (gameOver || autoplay) return;
+  if (e.touches && e.touches.length === 1) {
+    touchStartX = e.touches[0].clientX;
+  }
+}
+
+function handleTouchMove(e) {
+  if (gameOver || autoplay) return;
+  if (touchStartX === null) return;
+  if (e.touches && e.touches.length === 1) {
+    const touchX = e.touches[0].clientX;
+    const deltaX = touchX - touchStartX;
+    if (Math.abs(deltaX) > 20) { // Only move if swipe is significant
+      if (deltaX > 0 && playerX < gameWidth - playerWidth) {
+        playerX += playerSpeed;
+        if (playerX > gameWidth - playerWidth) playerX = gameWidth - playerWidth;
+      } else if (deltaX < 0 && playerX > 0) {
+        playerX -= playerSpeed;
+        if (playerX < 0) playerX = 0;
+      }
+      player.style.left = playerX + 'px';
+      touchStartX = touchX; // Reset for next swipe
+    }
+  }
+}
+
+function handleTouchEnd(e) {
+  touchStartX = null;
+}
+
+// Tap to shoot
+function handleTouchTap(e) {
+  if (!autoplay && !gameOver) {
+    createBullet();
+  }
+}
+
+// Attach listeners to the game area
+game.addEventListener('touchstart', handleTouchStart, {passive: true});
+game.addEventListener('touchmove', handleTouchMove, {passive: true});
+game.addEventListener('touchend', handleTouchEnd, {passive: true});
+game.addEventListener('touchcancel', handleTouchEnd, {passive: true});
+
+// Tap anywhere in the lower half of the game area to shoot
+game.addEventListener('touchend', function(e) {
+  if (gameOver || autoplay) return;
+  if (e.changedTouches && e.changedTouches.length === 1) {
+    const touchY = e.changedTouches[0].clientY;
+    const rect = game.getBoundingClientRect();
+    if (touchY > rect.top + rect.height / 2) {
+      handleTouchTap(e);
+    }
+  }
+}, {passive: true});
+
 // --- Circular Collision Detection with Easier Hitbox ---
 function checkCollision(ax, ay) {
   // Center of player
@@ -469,4 +528,4 @@ function startGame() {
   gameLoop();
 }
 
-window.onload = startGame;p
+window.onload = startGame;
