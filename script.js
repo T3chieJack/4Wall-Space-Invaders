@@ -104,17 +104,45 @@ if (!gameOverOverlay) {
   gameOverOverlay.style.textAlign = 'center';
   game.appendChild(gameOverOverlay);
 }
+
+// --- Play Again Button for Mobile/Game Over ---
+let playAgainBtn = document.createElement('button');
+playAgainBtn.textContent = 'Play Again';
+playAgainBtn.style.position = 'absolute';
+playAgainBtn.style.top = '60%';
+playAgainBtn.style.left = '50%';
+playAgainBtn.style.transform = 'translate(-50%, -50%)';
+playAgainBtn.style.fontSize = '2em';
+playAgainBtn.style.padding = '20px 40px';
+playAgainBtn.style.borderRadius = '20px';
+playAgainBtn.style.border = '2px solid #333';
+playAgainBtn.style.background = '#fff8';
+playAgainBtn.style.zIndex = '100';
+playAgainBtn.style.display = 'none';
+playAgainBtn.style.cursor = 'pointer';
+document.body.appendChild(playAgainBtn);
+
+function showPlayAgainBtn() {
+  playAgainBtn.style.display = 'block';
+}
+function hidePlayAgainBtn() {
+  playAgainBtn.style.display = 'none';
+}
+
+// --- Game Over Overlay Functions ---
 function showGameOver() {
   gameOver = true;
   gameOverOverlay.innerHTML = `
     <div>Score: ${score}</div>
-    <div style="font-size:1em;margin-top:20px;">Press <b>P</b> to play</div>
+    <div style="font-size:1em;margin-top:20px;">Press <b>P</b> or tap below</div>
   `;
   gameOverOverlay.style.display = 'flex';
+  showPlayAgainBtn();
 }
 function hideGameOver() {
   gameOver = false;
   gameOverOverlay.style.display = 'none';
+  hidePlayAgainBtn();
 }
 
 // --- Speed Selector ---
@@ -489,6 +517,23 @@ function gameLoop() {
 // --- Listen for "P" to restart ---
 document.addEventListener('keydown', function(e) {
   if (gameOver && (e.key === 'p' || e.key === 'P')) {
+    score = 0;
+    updateHUD();
+    hideGameOver();
+    playerX = 150;
+    player.style.left = playerX + 'px';
+    for (let b of bullets) game.removeChild(b.el);
+    bullets = [];
+    for (let j = 0; j < asteroids.length; j++) {
+      resetAsteroid(asteroids[j], true);
+    }
+    gameLoop();
+  }
+});
+
+// --- Play Again Button click handler ---
+playAgainBtn.addEventListener('click', function() {
+  if (gameOver) {
     score = 0;
     updateHUD();
     hideGameOver();
