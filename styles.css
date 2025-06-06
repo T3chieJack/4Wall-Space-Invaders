@@ -1,0 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap');
+
+body {
+  margin: 0;
+  background: #111;
+  font-family: 'Pixelify Sans', Arial, sans-serif;
+}
+
+#speed-select {
+  width: 400px;
+  margin: 20px auto 0 auto;
+  color: #fff;
+  font-family: 'Pixelify Sans', Arial, sans-serif;
+  font-size: 1.1em;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
+}
+
+#hud {
+  width: 400px;
+  margin: 20px auto 0 auto;
+  color: #fff;
+  font-family: 'Pixelify Sans', Arial, sans-serif;
+  font-size: 1.2em;
+  display: flex;
+  justify-content: space-between;
+  user-select: none;
+}
+
+#game {
+  width: 400px;
+  height: 600px;
+  background: #222;
+  margin: 10px auto 0 auto;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 30px #000;
+}
+
+#player {
+  width: 100px;
+  height: 100px;
+  background: url('Rocket.png') no-repeat center/contain;
+  position: absolute;
+  bottom: 10px;
+  left: 150px;
+  z-index: 2;
+  background-color: transparent;
+  border-radius: 50%; /* Makes the box round, hides corners */
+  overflow: hidden;   /* Ensures image stays within the round shape */
+}
+
+.asteroid {
+  width: 70px;
+  height: 70px;
+  background: url('darren.png') no-repeat center/contain;
+  position: absolute;
+  top: -70px;
+  z-index: 1;
+  box-shadow: 0 4px 16px #0008;
+  background-color: transparent;
+  border-radius: 50%; /* Makes the box round, hides corners */
+  overflow: hidden;   /* Ensures image stays within the round shape */
+}
+.bullet {
+   width: 8px;
+   height: 20px;
+   background: yellow;
+   position: absolute;
+   z-index: 3;
+   border-radius: 4px;
+   box-shadow: 0 0 6px #fff;
+ }
