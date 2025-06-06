@@ -118,14 +118,12 @@ function hideGameOver() {
 }
 
 // --- Speed Selector ---
-// Make the game easier: lower default speed
 function getAsteroidSpeed() {
   return Number(speedSelect ? speedSelect.value : 1); // was 2
 }
 
 // --- Asteroid Creation (spread out and move horizontally, easier) ---
 function createAsteroids() {
-  // Remove old asteroids from DOM if any
   for (const a of asteroids) {
     if (a.el && a.el.parentNode) a.el.parentNode.removeChild(a.el);
   }
@@ -133,12 +131,10 @@ function createAsteroids() {
   for (let i = 0; i < asteroidCount; i++) {
     const asteroidEl = document.createElement('div');
     asteroidEl.className = 'asteroid';
-    // Spread asteroids further apart
     const laneWidth = (gameWidth - asteroidSize) / (asteroidCount + 1);
     const x = Math.round((i + 1) * laneWidth);
     const y = Math.random() * -600;
     const dir = Math.random() < 0.5 ? 1 : -1;
-    // Lower horizontal speed
     const speedX = 0.5 + Math.random() * 0.5;
     asteroidEl.style.left = x + 'px';
     asteroidEl.style.top = y + 'px';
@@ -152,8 +148,7 @@ function resetAsteroid(asteroid, initial = false) {
   asteroid.x = Math.floor(Math.random() * (gameWidth - asteroidSize));
   asteroid.y = initial ? Math.random() * -600 : -asteroidSize;
   asteroid.dir = Math.random() < 0.5 ? 1 : -1;
-  asteroid.speedX = 0.5 + Math.random() * 0.5; // easier: slower horizontal speed
-  // If it's a special asteroid, keep its background
+  asteroid.speedX = 0.5 + Math.random() * 0.5;
   if (!asteroid.special) {
     asteroid.el.style.background = "url('darren.png') no-repeat center/contain";
   }
@@ -164,7 +159,7 @@ function resetAsteroid(asteroid, initial = false) {
 // --- Player Movement ---
 let autoplay = false;
 function movePlayer(e) {
-  if (autoplay || gameOver) return; // Disable manual movement in autoplay or game over
+  if (autoplay || gameOver) return;
   if (e.key === 'ArrowLeft' && playerX > 0) {
     playerX -= playerSpeed;
     if (playerX < 0) playerX = 0;
@@ -176,82 +171,110 @@ function movePlayer(e) {
 }
 document.addEventListener('keydown', movePlayer);
 
-// --- Touchscreen Controls ---
-let touchStartX = null;
+// --- Touchscreen Buttons for Mobile ---
+const controls = document.createElement('div');
+controls.id = 'touch-controls';
+controls.style.position = 'absolute';
+controls.style.bottom = '10px';
+controls.style.left = '0';
+controls.style.width = '100%';
+controls.style.display = 'flex';
+controls.style.justifyContent = 'center';
+controls.style.gap = '20px';
+controls.style.zIndex = '20';
+controls.style.pointerEvents = 'none';
 
-function handleTouchStart(e) {
-  if (gameOver || autoplay) return;
-  if (e.touches && e.touches.length === 1) {
-    touchStartX = e.touches[0].clientX;
+const leftBtn = document.createElement('button');
+leftBtn.textContent = '◀';
+leftBtn.style.fontSize = '2em';
+leftBtn.style.width = '60px';
+leftBtn.style.height = '60px';
+leftBtn.style.borderRadius = '50%';
+leftBtn.style.border = '2px solid #333';
+leftBtn.style.background = '#fff8';
+leftBtn.style.pointerEvents = 'auto';
+
+const shootBtn = document.createElement('button');
+shootBtn.textContent = '●';
+shootBtn.style.fontSize = '2em';
+shootBtn.style.width = '60px';
+shootBtn.style.height = '60px';
+shootBtn.style.borderRadius = '50%';
+shootBtn.style.border = '2px solid #333';
+shootBtn.style.background = '#fff8';
+shootBtn.style.pointerEvents = 'auto';
+
+const rightBtn = document.createElement('button');
+rightBtn.textContent = '▶';
+rightBtn.style.fontSize = '2em';
+rightBtn.style.width = '60px';
+rightBtn.style.height = '60px';
+rightBtn.style.borderRadius = '50%';
+rightBtn.style.border = '2px solid #333';
+rightBtn.style.background = '#fff8';
+rightBtn.style.pointerEvents = 'auto';
+
+controls.appendChild(leftBtn);
+controls.appendChild(shootBtn);
+controls.appendChild(rightBtn);
+document.body.appendChild(controls);
+
+// Touch button events
+leftBtn.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  if (!autoplay && !gameOver && playerX > 0) {
+    playerX -= playerSpeed;
+    if (playerX < 0) playerX = 0;
+    player.style.left = playerX + 'px';
   }
-}
-
-function handleTouchMove(e) {
-  if (gameOver || autoplay) return;
-  if (touchStartX === null) return;
-  if (e.touches && e.touches.length === 1) {
-    const touchX = e.touches[0].clientX;
-    const deltaX = touchX - touchStartX;
-    if (Math.abs(deltaX) > 20) { // Only move if swipe is significant
-      if (deltaX > 0 && playerX < gameWidth - playerWidth) {
-        playerX += playerSpeed;
-        if (playerX > gameWidth - playerWidth) playerX = gameWidth - playerWidth;
-      } else if (deltaX < 0 && playerX > 0) {
-        playerX -= playerSpeed;
-        if (playerX < 0) playerX = 0;
-      }
-      player.style.left = playerX + 'px';
-      touchStartX = touchX; // Reset for next swipe
-    }
+});
+rightBtn.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  if (!autoplay && !gameOver && playerX < gameWidth - playerWidth) {
+    playerX += playerSpeed;
+    if (playerX > gameWidth - playerWidth) playerX = gameWidth - playerWidth;
+    player.style.left = playerX + 'px';
   }
-}
-
-function handleTouchEnd(e) {
-  touchStartX = null;
-}
-
-// Tap to shoot
-function handleTouchTap(e) {
+});
+shootBtn.addEventListener('touchstart', function(e) {
+  e.preventDefault();
   if (!autoplay && !gameOver) {
     createBullet();
   }
-}
+});
 
-// Attach listeners to the game area
-game.addEventListener('touchstart', handleTouchStart, {passive: true});
-game.addEventListener('touchmove', handleTouchMove, {passive: true});
-game.addEventListener('touchend', handleTouchEnd, {passive: true});
-game.addEventListener('touchcancel', handleTouchEnd, {passive: true});
-
-// Tap anywhere in the lower half of the game area to shoot
-game.addEventListener('touchend', function(e) {
-  if (gameOver || autoplay) return;
-  if (e.changedTouches && e.changedTouches.length === 1) {
-    const touchY = e.changedTouches[0].clientY;
-    const rect = game.getBoundingClientRect();
-    if (touchY > rect.top + rect.height / 2) {
-      handleTouchTap(e);
-    }
+// Also support mouse for desktop
+leftBtn.addEventListener('mousedown', function(e) {
+  if (!autoplay && !gameOver && playerX > 0) {
+    playerX -= playerSpeed;
+    if (playerX < 0) playerX = 0;
+    player.style.left = playerX + 'px';
   }
-}, {passive: true});
+});
+rightBtn.addEventListener('mousedown', function(e) {
+  if (!autoplay && !gameOver && playerX < gameWidth - playerWidth) {
+    playerX += playerSpeed;
+    if (playerX > gameWidth - playerWidth) playerX = gameWidth - playerWidth;
+    player.style.left = playerX + 'px';
+  }
+});
+shootBtn.addEventListener('mousedown', function(e) {
+  if (!autoplay && !gameOver) {
+    createBullet();
+  }
+});
 
 // --- Circular Collision Detection with Easier Hitbox ---
 function checkCollision(ax, ay) {
-  // Center of player
   const playerCenterX = playerX + playerWidth / 2;
   const playerCenterY = 600 - 10 - playerHeight / 2;
-  // Center of asteroid
   const asteroidCenterX = ax + asteroidSize / 2;
   const asteroidCenterY = ay + asteroidSize / 2;
-
   const dx = playerCenterX - asteroidCenterX;
   const dy = playerCenterY - asteroidCenterY;
   const distance = Math.sqrt(dx * dx + dy * dy);
-
-  // Shrink radii for a much easier hitbox (20% of size)
   const playerRadius = playerWidth * 0.2;
   const asteroidRadius = asteroidSize * 0.2;
-
   return distance < (playerRadius + asteroidRadius);
 }
 
@@ -275,18 +298,13 @@ if (autoplayBtn) {
 function autoplayMove() {
   let asteroidSpeed = getAsteroidSpeed();
   let safeX = [];
-
-  // Try every possible player position (in steps of playerSpeed)
   for (let x = 0; x <= gameWidth - playerWidth; x += playerSpeed) {
     let safe = true;
     for (let i = 0; i < asteroids.length; i++) {
       const a = asteroids[i];
-      // Predict when asteroid will reach player's Y
       const playerY = 600 - 10 - playerHeight;
       const timeToPlayer = (playerY - a.y) / asteroidSpeed;
-      if (timeToPlayer < 0) continue; // Asteroid already passed
-
-      // Predict asteroid's future X at that time (simulate bouncing)
+      if (timeToPlayer < 0) continue;
       let tempDir = a.dir;
       let tempX = a.x;
       let remainingTime = timeToPlayer;
@@ -307,8 +325,6 @@ function autoplayMove() {
         }
       }
       let futureAx = tempX;
-
-      // Use circular collision logic for prediction
       const playerCenterX = x + playerWidth / 2;
       const playerCenterY = playerY + playerHeight / 2;
       const asteroidCenterX = futureAx + asteroidSize / 2;
@@ -318,7 +334,6 @@ function autoplayMove() {
       const distance = Math.sqrt(dx * dx + dy * dy);
       const playerRadius = playerWidth * 0.2;
       const asteroidRadius = asteroidSize * 0.2;
-
       if (distance < (playerRadius + asteroidRadius)) {
         safe = false;
         break;
@@ -326,10 +341,7 @@ function autoplayMove() {
     }
     if (safe) safeX.push(x);
   }
-
-  // If there is a safe spot, move towards the closest one
   if (safeX.length > 0) {
-    // Find the closest safeX to current playerX
     let closest = safeX.reduce((prev, curr) =>
       Math.abs(curr - playerX) < Math.abs(prev - playerX) ? curr : prev
     );
@@ -349,7 +361,6 @@ function createBullet() {
   if (gameOver) return;
   const bullet = document.createElement('div');
   bullet.className = 'bullet';
-  // Start at center top of player
   const bulletX = playerX + playerWidth / 2 - bulletWidth / 2;
   const bulletY = 600 - 10 - playerHeight;
   bullet.style.left = bulletX + 'px';
@@ -367,7 +378,6 @@ document.addEventListener('keydown', function(e) {
 
 // --- Bullet-Asteroid Collision ---
 function checkBulletCollision(bx, by, ax, ay) {
-  // Simple rectangle collision
   return (
     bx < ax + asteroidSize &&
     bx + bulletWidth > ax &&
@@ -379,18 +389,14 @@ function checkBulletCollision(bx, by, ax, ay) {
 // --- Special Person Asteroid Spawner ---
 let lastSpecialIndex = -1;
 let specialAsteroids = [];
-const MAX_SPECIAL_ASTEROIDS = 2; // Limit to 2 special people at a time
-
+const MAX_SPECIAL_ASTEROIDS = 2;
 function spawnSpecialPerson() {
-  // Remove oldest special asteroid if over the limit
   if (specialAsteroids.length >= MAX_SPECIAL_ASTEROIDS) {
     const old = specialAsteroids.shift();
     if (old.el && old.el.parentNode) old.el.parentNode.removeChild(old.el);
-    // Also remove from main asteroids array
     const idx = asteroids.indexOf(old);
     if (idx !== -1) asteroids.splice(idx, 1);
   }
-
   let idx;
   do {
     idx = Math.floor(Math.random() * specialPeople.length);
@@ -411,23 +417,16 @@ function spawnSpecialPerson() {
   asteroids.push(specialObj);
   specialAsteroids.push(specialObj);
 }
-// Spawn a special person every 7 seconds
 setInterval(spawnSpecialPerson, 7000);
 
 // --- Main Game Loop ---
 function gameLoop() {
   if (gameOver) return;
-
   let asteroidSpeed = getAsteroidSpeed();
-
-  // Move asteroids
   for (let i = 0; i < asteroids.length; i++) {
     const a = asteroids[i];
-    // Move down
     a.y += asteroidSpeed;
-    // Move side-to-side
     a.x += a.dir * a.speedX;
-    // Bounce off walls
     if (a.x <= 0) {
       a.x = 0;
       a.dir = 1;
@@ -437,23 +436,17 @@ function gameLoop() {
     }
     a.el.style.left = a.x + 'px';
     a.el.style.top = a.y + 'px';
-
-    // Check collision with player
     if (checkCollision(a.x, a.y)) {
       deaths++;
       updateHUD();
-      // Reset all asteroids
       for (let j = 0; j < asteroids.length; j++) {
         resetAsteroid(asteroids[j], true);
       }
-      // Remove all bullets
       for (let b of bullets) game.removeChild(b.el);
       bullets = [];
       showGameOver();
       return;
     }
-
-    // Reset asteroid if out of bounds
     if (a.y > 600) {
       resetAsteroid(a, false);
       score++;
@@ -464,25 +457,18 @@ function gameLoop() {
       updateHUD();
     }
   }
-
-  // Move bullets
   for (let i = bullets.length - 1; i >= 0; i--) {
     const b = bullets[i];
     b.y -= bulletSpeed;
     b.el.style.top = b.y + 'px';
-
-    // Remove bullet if out of bounds
     if (b.y + bulletHeight < 0) {
       game.removeChild(b.el);
       bullets.splice(i, 1);
       continue;
     }
-
-    // Check collision with asteroids
     for (let j = 0; j < asteroids.length; j++) {
       const a = asteroids[j];
       if (checkBulletCollision(b.x, b.y, a.x, a.y)) {
-        // Destroy asteroid and bullet
         resetAsteroid(a, false);
         game.removeChild(b.el);
         bullets.splice(i, 1);
@@ -496,7 +482,6 @@ function gameLoop() {
       }
     }
   }
-
   if (autoplay) autoplayMove();
   requestAnimationFrame(gameLoop);
 }
@@ -509,10 +494,8 @@ document.addEventListener('keydown', function(e) {
     hideGameOver();
     playerX = 150;
     player.style.left = playerX + 'px';
-    // Remove all bullets
     for (let b of bullets) game.removeChild(b.el);
     bullets = [];
-    // Reset all asteroids
     for (let j = 0; j < asteroids.length; j++) {
       resetAsteroid(asteroids[j], true);
     }
